@@ -71,68 +71,33 @@ function test() {
     catch(err) { console.log(err); Logger.log('akan');
   }
 
-
-
 }
 
 
+function test2() {
 
+  ary = [
+    /* Hakuba47   */ ['https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
+    /* Ozetokura  */ ['http://www.ozetokura.co.jp/snowpark/', /<p>天候：([\s\S]*?)<\/p>/,/：/,3,'cm　雪質'],
+    /* Ognahotaka */ ['http://ognahotaka.jp/', /title_report.png"([\s\S]*?)<div class="topics">/,/\r\n|\r|\n/,9,'cm</p></div>','<div class="fallensnow"><p>']
+  ];
 
+  for ( var i = 0; i < ary.length; i++ ) {
 
-function fetchHakuba47() {
-  var TargetUrl = "https://www.hakuba47.co.jp/winter/";
-  var StrRegexp=/a01_ico01.png"([\s\S]*?)<\/div>/;
-  
-  var ContentText = getHtml(TargetUrl);
+    Logger.log(ary[i][0]);
+    Logger.log(ary[i][1]);
+    Logger.log(ary[i][2]);
+    Logger.log(ary[i][3]);
+    Logger.log(ary[i][4]);
+    Logger.log(ary[i][5]);
+    Logger.log(ary[i][6]);
+    try { 
+      var aaa = fetchSnowFalls(ary[i][0], ary[i][1], ary[i][2], ary[i][3], ary[i][4], ary[i][5], ary[i][6] );
+      Logger.log(aaa);
+    } 
+      catch(err) { console.log(err); Logger.log('akan'); 
+    }
+  }
 
-  var DataSnowfalls = ContentText.match(StrRegexp);
-  Logger.log(DataSnowfalls);
-  
-  var ArySnowfalls = String(DataSnowfalls).split(/\r\n|\r|\n/);
-  Logger.log(ArySnowfalls[0]);
-  Logger.log(ArySnowfalls[1]);
-  Logger.log(ArySnowfalls[2]);
-
-  var IntSnowfalls = ArySnowfalls[2].replace("cm", "");
-  Logger.log(IntSnowfalls);
-  
-  var IntSnowfalls = IntSnowfalls.replace(/\s+/g, "");
-  Logger.log(IntSnowfalls);
-
-  return IntSnowfalls;
 }
-
-// 公式サイトより山頂の積雪量を取得
-// 尾瀬戸倉
-function fetchOzetokura() {
-  var fetch = UrlFetchApp.fetch("http://www.ozetokura.co.jp/snowpark/");
-  var response = fetch.getContentText();
-  
-  var strRegexp=/<p>天候：([\s\S]*?)<\/p>/;
-  var dataSnowfalls = response.match(strRegexp);
-  var arySnowfalls = String(dataSnowfalls).split(/：/);
-  var intSnowfalls = arySnowfalls[3].replace('cm　雪質', "");
-  var intSnowfalls = intSnowfalls.replace(/\s+/g, "");
-  Logger.log(intSnowfalls);  
-
-  return intSnowfalls;
-}
-
-// 公式サイトより山頂の積雪量を取得
-// おぐなほたか
-function fetchOgnahotaka() {
-  var fetch = UrlFetchApp.fetch("http://ognahotaka.jp/");
-  var response = fetch.getContentText();
-  
-  var strRegexp=/title_report.png"([\s\S]*?)<div class="topics">/;
-  var dataSnowfalls = response.match(strRegexp);
-  var arySnowfalls = String(dataSnowfalls).split(/\r\n|\r|\n/);
-  var intSnowfalls = arySnowfalls[9].replace('cm</p></div>', "");
-  var intSnowfalls = intSnowfalls.replace('<div class="fallensnow"><p>', "");
-  var intSnowfalls = intSnowfalls.replace(/\s+/g, "");
-  Logger.log(intSnowfalls);  
-  
-  return intSnowfalls;
-}
-
 
