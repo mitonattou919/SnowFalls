@@ -47,6 +47,20 @@ function fetchSnowFalls(TargetUrl, StrRegexp, StrSep, IntOffset, StrExclution1, 
 
 }
 
+function getAmount(ObjWork) {
+
+  for ( var i = 0; i < ObjWork.length; i++ ) {
+    try { 
+      var aaa = fetchSnowFalls(ObjWork[i][0], ObjWork[i][1], ObjWork[i][2], ObjWork[i][3], ObjWork[i][4], ObjWork[i][5], ObjWork[i][6] );
+      Logger.log(aaa);
+    } catch(err) { 
+      console.log(err); 
+      Logger.log('akan');
+      return 'akan';
+    }
+  }
+}
+
 
 
 function test() {
@@ -79,6 +93,7 @@ function test2() {
   ary = [
     /* Hakuba47   */ ['https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
     /* Ozetokura  */ ['http://www.ozetokura.co.jp/snowpark/', /<p>天候：([\s\S]*?)<\/p>/,/：/,3,'cm　雪質'],
+    /* Yeti       */ ['https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
     /* Ognahotaka */ ['http://ognahotaka.jp/', /title_report.png"([\s\S]*?)<div class="topics">/,/\r\n|\r|\n/,9,'cm</p></div>','<div class="fallensnow"><p>']
   ];
 
@@ -101,3 +116,65 @@ function test2() {
 
 }
 
+
+function test3() {
+
+  ary = [
+    /* Yeti       */ ['https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm']
+  ];
+
+  for ( var i = 0; i < ary.length; i++ ) {
+    try { 
+      var aaa = fetchSnowFalls(ary[i][0], ary[i][1], ary[i][2], ary[i][3], ary[i][4], ary[i][5], ary[i][6] );
+      Logger.log(aaa);
+    } 
+      catch(err) { console.log(err); Logger.log('akan'); 
+    }
+  }
+
+}
+
+
+function test4() {
+
+  ary = [
+    /* Hakuba47   */ ['https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
+    /* Ozetokura  */ ['http://www.ozetokura.co.jp/snowpark/', /<p>天候：([\s\S]*?)<\/p>/,/：/,3,'cm　雪質'],
+    /* Yeti       */ ['https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
+    /* Ognahotaka */ ['http://ognahotaka.jp/', /title_report.png"([\s\S]*?)<div class="topics">/,/\r\n|\r|\n/,9,'cm</p></div>','<div class="fallensnow"><p>']
+  ];
+
+  var result = getAmount(ary);
+  Logger.log(result);
+
+
+}
+
+
+
+
+var ctrlSnowfall = function ( ObjWork ) {
+  this.ObjWork    = ObjWork;
+  this.bbb = 'test';
+}
+
+ctrlSnowfall.prototype = {
+
+  // get status of GCE instances.
+  getAmount : function() {
+    Logger.log(this.bbb);
+    Logger.log(this.ObjWork[0][0]);
+    for ( var i = 0; i < this.ObjWork.length; i++ ) {
+      try { 
+        var aaa = fetchSnowFalls(this.ObjWork[i][0], this.ObjWork[i][1], this.ObjWork[i][2], this.ObjWork[i][3], this.ObjWork[i][4], this.ObjWork[i][5], this.ObjWork[i][6] );
+        Logger.log(aaa);
+        return aaa;
+      } catch(err) { 
+        console.log(err); 
+        Logger.log('akan');
+        return 'akan';
+      }
+    }
+
+  }
+}
