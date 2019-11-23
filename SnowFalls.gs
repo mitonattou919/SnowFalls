@@ -1,12 +1,14 @@
+var SsFileName = 'AmountOfSnowfall';
+
 // Global Objects.
 var ObjTest = [
   /* Tugaike    */ [1002, 'Tugaike', 'Hakuba', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
 
 ];
 
-var ObjHakuba = [
-  /* Hakuba47   */ [1001, '47         ', 'Hakuba', 'https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
-  /* Tugaike    */ [1002, 'Tugaike', 'Hakuba', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
+var ObjNagano = [
+  /* Hakuba47   */ [1001, '47         ', 'Nagano', 'https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
+  /* Tugaike    */ [1002, 'Tugaike', 'Nagano', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
   /* Yeti       */ [1003, 'Yeti       ', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
   /* Karuizawa  */ [1004, 'Karuizawa', 'Nagano', 'https://www.princehotels.co.jp/ski/karuizawa/winter/', /<li>積雪量([\s\S]*?)<\/span>/,/\s/,2,'<span>','</span>,<br']
 ];
@@ -131,12 +133,12 @@ function postSlack(SlackPayload){
 
 function test6() {
 
-  var result = getAmount2(ObjHakuba);
+  var result = getAmount2(ObjNagano);
 
   var Cache = CacheService.getScriptCache();  
 
-  for ( var i = 0; i < ObjHakuba.length; i++ ) {
-    Logger.log(ObjHakuba[i][1] + ' :' + Cache.get(ObjHakuba[i][0]));
+  for ( var i = 0; i < ObjNagano.length; i++ ) {
+    Logger.log(ObjNagano[i][1] + ' :' + Cache.get(ObjNagano[i][0]));
   }  
   
 }
@@ -147,15 +149,15 @@ function test7() {
   var msg = '';
   var Cache = CacheService.getScriptCache();  
   
-  for ( var i = 0; i < ObjHakuba.length; i++ ) {
-    var msg = msg + ObjHakuba[i][1] + '  :  ' + Cache.get(ObjHakuba[i][0]) + '\n';
-    Logger.log(ObjHakuba[i][1] + ' :' + Cache.get(ObjHakuba[i][0]));
+  for ( var i = 0; i < ObjNagano.length; i++ ) {
+    var msg = msg + ObjNagano[i][1] + '  :  ' + Cache.get(ObjNagano[i][0]) + '\n';
+    Logger.log(ObjNagano[i][1] + ' :' + Cache.get(ObjNagano[i][0]));
   }  
   
   const SlackPayload = {
       'text'       : 'こんな感じやで',
       'attachments': [ {
-        'title': 'Hakuba',
+        'title': ObjNagano[0][2],
         'text': msg
        } ]
   };
@@ -165,5 +167,165 @@ function test7() {
 
 }
 
+function test10() {
+
+  var date = new Date('2020/11/1');
+  const MyDateJson = new DateJson();
+  const MyObjJson  = MyDateJson.get();
+
+  Logger.log(MyObjJson.season);
+  Logger.log(MyObjJson.yyyy);
+  Logger.log(MyObjJson.mm);
+  Logger.log(MyObjJson.dd);
+  Logger.log(MyObjJson.diff);
+
+  var ary = [[MyObjJson.yyyy + '/' + MyObjJson.mm + '/' + MyObjJson.dd]];
+  var Cache = CacheService.getScriptCache();  
+  
+  for ( var i = 0; i < ObjNagano.length; i++ ) {
+    ary[0][i + 1] = Cache.get(ObjNagano[i][0]);
+  }  
+Logger.log(ary);
+
+  
+  var MySs = new CtrlSS(MyObjJson.season, ObjNagano[0][2], MyObjJson.yyyy, MyObjJson.mm, MyObjJson.dd, MyObjJson.diff, ary, (ObjNagano.length + 1) );
+
+  MySs.input();
+
+}
+
+
+// JSON Control Class
+var DateJson = function (TextDate) {
+  this.TextDate = TextDate;
+};
+
+DateJson.prototype = {
+
+  // return target date and time by JSON
+  get : function() {
+
+    const CurrentDate = new Date();
+
+    if ( !this.TextDate ) {
+      var Stryyyy = CurrentDate.getFullYear();
+      var Strmm   = ( CurrentDate.getMonth() + 1 );
+      var Strdd   = CurrentDate.getDate();
+    } else {
+      var Stryyyy = this.TextDate.getFullYear();
+      var Strmm   = ( this.TextDate.getMonth() + 1 );
+      var Strdd   = this.TextDate.getDate();
+    }
+
+    if ( Strmm < 11 ) {
+      var TargetSeason = ( Stryyyy - 1 ) + '-' + Stryyyy;
+      var InitialDate = new Date( ( Stryyyy - 1 ) + '/11/01 00:00:00');
+    } else {
+      var TargetSeason = Stryyyy + '-' + ( Stryyyy + 1 );
+      var InitialDate = new Date( Stryyyy + '/11/01 00:00:00');
+    }
+
+    const TargetDate = new Date(Stryyyy + '/' + Strmm + '/' + Strdd + ' ' + '00:00:01');
+    const TargetRelative = Math.ceil( ( TargetDate - InitialDate )  / ( 1000 * 60 * 60 * 24 ) );
+
+    const JsonDateOut = {
+      "season" : TargetSeason,
+      "yyyy"   : Stryyyy,
+      "mm"     : ( '00' + ( Strmm ) ).slice(-2),
+      "dd"     : ( '00' + ( Strdd ) ).slice(-2),
+      "diff"   : TargetRelative,
+    };
+
+    return JsonDateOut;
+
+  }
+}
+
+// File Control Class
+var CtrlFile = function ( FileName ) {
+  this.FileName = FileName;
+}
+
+CtrlFile.prototype = {
+
+  // get identifier of file on root directory.
+  getSSID : function() {
+
+    const RootId = DriveApp.getRootFolder().getId();
+    const RootFolder = DriveApp.getFolderById(RootId);  
+    const RootFiles = RootFolder.getFiles();
+
+    while (RootFiles.hasNext()) {
+      var FileName = RootFiles.next();
+    
+      if ( FileName.getName() === this.FileName ) {
+        var SsId = FileName.getId();
+        break;
+      }
+    }
+    return SsId;
+  }
+}
+
+
+// Control Spread Sheet Class
+var CtrlSS = function ( Season, UserName, yyyy, mm, dd, Diff, Value, Length ) {
+  this.Season     = Season;
+  this.UserName   = UserName;
+  this.yyyy       = yyyy;
+  this.mm         = mm;
+  this.dd         = dd;
+  this.Diff       = Diff;
+  this.Value      = Value;
+  this.Length     = Length;
+}
+
+CtrlSS.prototype = {
+
+  // get identifier of file on root directory.
+  input : function() {
+
+    // Set Spread Sheet Name like AmountOfSnowfall_2019-2020.
+    const SsName = SsFileName + '_' + this.Season;
+
+    // Get Spread Sheet ID from Script Properties.
+    var SsId = PropertiesService.getScriptProperties().getProperty(SsName);
+
+    // If not exist in Properties then get from DriveApp
+    if ( !SsId ) {
+      var MySs = new CtrlFile(SsName);
+      var SsId = MySs.getSSID();
+      var UserProp = PropertiesService.getScriptProperties();
+      UserProp.setProperty(SsName, SsId);
+    }
+
+    // If not exist SS then create.
+    if ( !SsId ) {
+      SpreadsheetApp.create(SsName);
+      var MySs = new CtrlFile(SsName);
+      var SsId = MySs.getSSID();
+      var UserProp = PropertiesService.getScriptProperties();
+      UserProp.setProperty(SsName, SsId);
+    }
+
+    // open spread sheet by id.
+    const ObjSs = SpreadsheetApp.openById(SsId);
+
+    // get sheet name.
+    var SheetName = ObjSs.getSheetByName(this.UserName);
+
+    // if not exist sheet then insert.
+    if ( !SheetName ) {
+      ObjSs.insertSheet(this.UserName);
+      var SheetName = ObjSs.getSheetByName(this.UserName);
+    }
+
+//    SheetName.getRange(this.Diff,1).setValue(this.yyyy + '/' + this.mm + '/' + this.dd);
+//    SheetName.getRange(this.Diff,2).setValue(this.Value);
+
+    SheetName.getRange(this.Diff, 1, 1, this.Length).setValues(this.Value);
+
+  }
+}
 
 
