@@ -2,15 +2,15 @@ var SsFileName = 'AmountOfSnowfall';
 
 // Global Objects.
 var ObjTest = [
-  /* Tugaike    */ [1002, 'Tugaike', 'Hakuba', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
+  /* Tugaike    */ [11002, 'Tugaike', 'Hakuba', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
 
 ];
 
 var ObjNagano = [
-  /* Hakuba47   */ [1001, '47         ', 'Nagano', 'https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
-  /* Tugaike    */ [1002, 'Tugaike', 'Nagano', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
-  /* Yeti       */ [1003, 'Yeti       ', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
-  /* Karuizawa  */ [1004, 'Karuizawa', 'Nagano', 'https://www.princehotels.co.jp/ski/karuizawa/winter/', /<li>積雪量([\s\S]*?)<\/span>/,/\s/,2,'<span>','</span>,<br']
+  /* Hakuba47   */ [11001, '47         ', 'Nagano', 'https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
+  /* Tugaike    */ [11002, 'Tugaike', 'Nagano', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
+  /* Yeti       */ [11003, 'Yeti       ', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
+  /* Karuizawa  */ [11004, 'Karuizawa', 'Nagano', 'https://www.princehotels.co.jp/ski/karuizawa/winter/', /<li>積雪量([\s\S]*?)<\/span>/,/\s/,2,'<span>','</span>,<br']
 ];
 
 
@@ -24,6 +24,25 @@ function test8() {
   
 }
 
+function test11() {
+
+  const MySnow = new SnowfallAmount(ObjNagano);
+
+  MySnow.get();
+  MySnow.putss();
+  MySnow.postslack2();
+
+}
+
+function test12() {
+
+  const MySnow = new SnowfallAmount(ObjTest);
+
+  MySnow.get();
+  MySnow.putss();
+  MySnow.postslack2();
+
+}
   
 // Get HTML Content.
 function getHtml(TargetUrl){
@@ -74,7 +93,7 @@ function fetchSnowFalls(TargetUrl, StrRegexp, StrSep, IntOffset, StrExclution1, 
   if ( IntSnowfalls !== "" && typeof IntSnowfalls !== 'undefined' && !isNaN(IntSnowfalls) ) {
     return IntSnowfalls;
   } else {
-    return "n/a";
+    return 0;
   }
 
 }
@@ -112,10 +131,6 @@ function getAmount2(ObjWork) {
   }
 }
 
-
-
-
-
 function postSlack(SlackPayload){
 
   const SlackPostUrl = PropertiesService.getScriptProperties().getProperty('SLACK_URL');
@@ -131,66 +146,95 @@ function postSlack(SlackPayload){
 
 }
 
-function test6() {
+// Snowfall Control Class
+var SnowfallAmount = function (ObjRegion) {
+  this.ObjRegion = ObjRegion;
+};
 
-  var result = getAmount2(ObjNagano);
+SnowfallAmount.prototype = {
 
-  var Cache = CacheService.getScriptCache();  
+  // Put amount of snowfall from web site to cache.
+  get : function() {
 
-  for ( var i = 0; i < ObjNagano.length; i++ ) {
-    Logger.log(ObjNagano[i][1] + ' :' + Cache.get(ObjNagano[i][0]));
-  }  
+    var result = getAmount2(this.ObjRegion);
+    var Cache = CacheService.getScriptCache();  
+
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      Logger.log(this.ObjRegion[i][1] + ' :' + Cache.get(this.ObjRegion[i][0]));
+    }  
+
+  },
+
+  // Put to spreadsheet.
+  putss : function() {
+
+    const MyDateJson = new DateJson();
+    const MyObjJson  = MyDateJson.get();
+
+    var AryData = [[MyObjJson.yyyy + '/' + MyObjJson.mm + '/' + MyObjJson.dd]];
+    var Cache = CacheService.getScriptCache();  
   
-}
-
-
-function test7() {
-
-  var msg = '';
-  var Cache = CacheService.getScriptCache();  
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      AryData[0][i + 1] = Cache.get(this.ObjRegion[i][0]);
+    }
   
-  for ( var i = 0; i < ObjNagano.length; i++ ) {
-    var msg = msg + ObjNagano[i][1] + '  :  ' + Cache.get(ObjNagano[i][0]) + '\n';
-    Logger.log(ObjNagano[i][1] + ' :' + Cache.get(ObjNagano[i][0]));
-  }  
+    var MySs = new CtrlSS(MyObjJson.season, this.ObjRegion[0][2], MyObjJson.yyyy, MyObjJson.mm, MyObjJson.dd, 
+                          MyObjJson.diff, AryData, (this.ObjRegion.length + 1) );
+
+    MySs.input();
+
+  },
+
+  // Post message to Slack order by identifier.
+  postslack : function() {
+    var PostMsg = '';
+    var Cache = CacheService.getScriptCache();  
   
-  const SlackPayload = {
-      'text'       : 'こんな感じやで',
-      'attachments': [ {
-        'title': ObjNagano[0][2],
-        'text': msg
-       } ]
-  };
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      var PostMsg = PostMsg + this.ObjRegion[i][1] + '  :  ' + Cache.get(this.ObjRegion[i][0]) + '\n';
+      Logger.log(this.ObjRegion[i][1] + ' :' + Cache.get(this.ObjRegion[i][0]));
+    }  
 
-  postSlack(SlackPayload);
+    const SlackPayload = {
+        'text'       : 'こんぐらいやで',
+        'attachments': [ {
+          'title': this.ObjRegion[0][2],
+          'text': PostMsg
+         } ]
+    };
 
+    postSlack(SlackPayload);
 
-}
+  },
 
-function test10() {
+  // Post message to Slack order by values descending.
+  postslack2 : function() {
 
-  var date = new Date('2020/11/1');
-  const MyDateJson = new DateJson();
-  const MyObjJson  = MyDateJson.get();
-
-  Logger.log(MyObjJson.season);
-  Logger.log(MyObjJson.yyyy);
-  Logger.log(MyObjJson.mm);
-  Logger.log(MyObjJson.dd);
-  Logger.log(MyObjJson.diff);
-
-  var ary = [[MyObjJson.yyyy + '/' + MyObjJson.mm + '/' + MyObjJson.dd]];
-  var Cache = CacheService.getScriptCache();  
+    var ObjTmp = [];
+    var PostMsg = '';
+    var Cache = CacheService.getScriptCache();  
   
-  for ( var i = 0; i < ObjNagano.length; i++ ) {
-    ary[0][i + 1] = Cache.get(ObjNagano[i][0]);
-  }  
-Logger.log(ary);
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      ObjTmp[i] = { name: this.ObjRegion[i][1], value: Cache.get(this.ObjRegion[i][0]) };
+    }  
 
-  
-  var MySs = new CtrlSS(MyObjJson.season, ObjNagano[0][2], MyObjJson.yyyy, MyObjJson.mm, MyObjJson.dd, MyObjJson.diff, ary, (ObjNagano.length + 1) );
+    ObjTmp.sort(function(a, b) { if (a.value < b.value) { return 1; } else { return -1; }});
 
-  MySs.input();
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      var PostMsg = PostMsg + ObjTmp[i].name + '  :  ' + ObjTmp[i].value + '\n';
+    }  
+
+    const SlackPayload = {
+        'text'       : 'こんぐらいやで',
+        'attachments': [ {
+          'title': this.ObjRegion[0][2],
+          'text': PostMsg
+         } ]
+    };
+
+    postSlack(SlackPayload);
+
+  }
 
 }
 
