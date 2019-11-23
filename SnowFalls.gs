@@ -2,15 +2,22 @@ var SsFileName = 'AmountOfSnowfall';
 
 // Global Objects.
 var ObjTest = [
+  /* Sanosaka    */ [11006, 'Sanosaka', 'Hakuba', 'https://sanosaka.jp/', /<div>山頂([\s\S]*?)cm<\/div>/,/\r\n|\r|\n/,1,'<div>積雪','cm</div>,</div>'],
+];
+
+var ObjHakuba = [
+  /* Hakuba47   */ [11001, '47     ', 'Hakuba', 'https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
   /* Tugaike    */ [11002, 'Tugaike', 'Hakuba', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
+  /* Iwatake    */ [11003, 'Iwatake', 'Hakuba', 'https://iwatake-mountain-resort.com/winter', /<dt class="snow_cover">積雪([\s\S]*?)<\/dd>/,/\r\n|\r|\n/,1,'<dd class="snow_cover_state mountainSide">', 'cm</dd>,</dt>'],
+  /* Happouone  */ [11004, 'Happouone', 'Hakuba', 'https://www.happo-one.jp/', /<h2>黒菱([\s\S]*?)cm<\/div>/,/\s/,20,'class="snow">積雪<strong>'],
+  /* Hakunori   */ [11005, 'Hakunori', 'Hakuba', 'https://www.hakunori.com/', /<span>営業時間([\s\S]*?)<\/span>/,/\r\n|\r|\n/,2,'積雪 ／','cm<br>'],
+  /* Sanosaka   */ [11006, 'Sanosaka', 'Hakuba', 'https://sanosaka.jp/', /<div>山頂([\s\S]*?)cm<\/div>/,/\r\n|\r|\n/,1,'<div>積雪','cm</div>,</div>'],
 
 ];
 
 var ObjNagano = [
-  /* Hakuba47   */ [11001, '47         ', 'Nagano', 'https://www.hakuba47.co.jp/winter/', /a01_ico01.png"([\s\S]*?)<\/div>/,/\r\n|\r|\n/,2,'cm'],
-  /* Tugaike    */ [11002, 'Tugaike', 'Nagano', 'http://www.tsugaike.gr.jp/', /area01.gif"([\s\S]*?)<\/ul>/,/\r\n|\r|\n/,3,'cm<\/li>', '<li class="snow">積雪 '],
-  /* Yeti       */ [11003, 'Yeti       ', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
-  /* Karuizawa  */ [11004, 'Karuizawa', 'Nagano', 'https://www.princehotels.co.jp/ski/karuizawa/winter/', /<li>積雪量([\s\S]*?)<\/span>/,/\s/,2,'<span>','</span>,<br']
+  /* Karuizawa  */ [12001, 'Karuizawa', 'Nagano', 'https://www.princehotels.co.jp/ski/karuizawa/winter/', /<li>積雪量([\s\S]*?)<\/span>/,/\s/,2,'<span>','</span>,<br'],
+  /* Yeti       */ [12002, 'Yeti       ', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
 ];
 
 
@@ -26,7 +33,7 @@ function test8() {
 
 function test11() {
 
-  const MySnow = new SnowfallAmount(ObjNagano);
+  const MySnow = new SnowfallAmount(ObjHakuba);
 
   MySnow.get();
   MySnow.putss();
@@ -36,7 +43,7 @@ function test11() {
 
 function test12() {
 
-  const MySnow = new SnowfallAmount(ObjTest);
+  const MySnow = new SnowfallAmount(ObjNagano);
 
   MySnow.get();
   MySnow.putss();
@@ -71,6 +78,7 @@ function fetchSnowFalls(TargetUrl, StrRegexp, StrSep, IntOffset, StrExclution1, 
 
   // Exclude specified string 1.
   var IntSnowfalls = ArySnowfalls[IntOffset].replace(StrExclution1, "");
+  Logger.log(ArySnowfalls[IntOffset]);
   Logger.log(IntSnowfalls);
   
   // Exclude specified string 2.
@@ -218,7 +226,7 @@ SnowfallAmount.prototype = {
       ObjTmp[i] = { name: this.ObjRegion[i][1], value: Cache.get(this.ObjRegion[i][0]) };
     }  
 
-    ObjTmp.sort(function(a, b) { if (a.value < b.value) { return 1; } else { return -1; }});
+    ObjTmp.sort(function(a, b) { if (a.value <= b.value) { return 1; } else { return -1; }});
 
     for ( var i = 0; i < this.ObjRegion.length; i++ ) {
       var PostMsg = PostMsg + ObjTmp[i].name + '  :  ' + ObjTmp[i].value + '\n';
