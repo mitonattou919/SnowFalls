@@ -2,7 +2,11 @@ var SsFileName = 'AmountOfSnowfall';
 
 // Global Objects.
 var ObjTest = [
-  /* Sanosaka    */ [11006, 'Sanosaka', 'Hakuba', 'https://sanosaka.jp/', /<div>山頂([\s\S]*?)cm<\/div>/,/\r\n|\r|\n/,1,'<div>積雪','cm</div>,</div>'],
+  /* Test    */ [11999, 'テスト野郎', 'Test', 'https://sanosaka.jp/', /<div>山頂([\s\S]*?)cm<\/div>/,/\r\n|\r|\n/,1,'<div>積雪','cm</div>,</div>'],
+];
+
+var ObjTest2 = [
+  /* Test    */ [12005, 'Tangram', 'Nagano', 'https://www.tangram.jp/ski/', /<th>積雪([\s\S]*?)<\/td>/,/\r\n|\r|\n/,1,'<td><strong>','</strong>cm</td>,</th>'],
 ];
 
 var ObjHakuba = [
@@ -17,39 +21,163 @@ var ObjHakuba = [
 
 var ObjNagano = [
   /* Karuizawa  */ [12001, 'Karuizawa', 'Nagano', 'https://www.princehotels.co.jp/ski/karuizawa/winter/', /<li>積雪量([\s\S]*?)<\/span>/,/\s/,2,'<span>','</span>,<br'],
-  /* Yeti       */ [12002, 'Yeti       ', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
+  /* Yeti       */ [12002, 'Yeti', 'Shizuoka', 'https://www.yeti-resort.com/', /<p>積雪量：([\s\S]*?)<\/p>/,/,/,1,'cm'],
+  /* Nozawa     */ [12003, 'Nozawa', 'Nagano', 'http://www.nozawaski.com/', /<p class="snow_depth">積雪量([\s\S]*?)cm<\/span><\/p>/,/\r\n|\r|\n/,2,'<p class="meter">','<span>cm</span></p>,</p>'],
+  /* Madarao    */ [12004, 'Madarao', 'Nagano', 'http://www.madarao.jp/ski', /<dt>積雪([\s\S]*?)<\/dd>/,/\r\n|\r|\n/,1,'<dd><strong>','</strong> cm</dd>,</dt>'],
+  /* Tangram    */ [12005, 'Tangram', 'Nagano', 'https://www.tangram.jp/ski/', /<th>積雪([\s\S]*?)<\/td>/,/\r\n|\r|\n/,1,'<td><strong>','</strong>cm</td>,</th>'],
 ];
+
+var ObjFukushima = [
+  /* Grandeco   */ [13001, 'Grandeco', 'Fukushima', 'https://www.grandeco.com/winter/', /<dt>積雪([\s\S]*?)<\/dd>/,/\r\n|\r|\n/,1,'<dd>','<span>cm</span></dd>,</dt>'],
+  /* Nekoma     */ [13002, 'Nekoma', 'Fukushima', 'https://www.nekoma.co.jp/', /積雪量([\s\S]*?)<\/dd>/,/\r\n|\r|\n/,2,'<dd class="cover_dl_dd fonten">','cm</dd>,'],
+];
+
 
 
 function test8() {
 
-  var result = getAmount2(ObjTest);
+  var result = getAmount2(ObjTest2);
 
   var Cache = CacheService.getScriptCache();  
 
-  Logger.log('Karuizawa:' + Cache.get(ObjTest[0][0]));
+  Logger.log('Karuizawa:' + Cache.get(ObjTest2[0][0]));
   
+}
+
+function test22() {
+
+  const MyDate = new Date();
+  
+  const MyDateJson = new DateJson(MyDate);
+  const MyObjJson  = MyDateJson.get();
+
+  var AryData = [[MyObjJson.yyyy + '/' + MyObjJson.mm + '/' + MyObjJson.dd]];
+
+  var MySs = new CtrlSS(MyObjJson.season, ObjHakuba[0][2], MyObjJson.yyyy, MyObjJson.mm, MyObjJson.dd, 
+                          MyObjJson.diff, AryData, (ObjHakuba.length + 1) );
+
+  const MyObjData = MySs.output();
+
+  // Set chart data
+  var ChartData = Charts.newDataTable()
+    .addColumn(Charts.ColumnType.DATE, "Date")
+    .addColumn(Charts.ColumnType.NUMBER, "Value");
+
+  for ( var i = 0; i < MyObjData.length; i++ ) {
+    if ( MyObjData[i][0] !== "" && typeof MyObjData[i][0] !== 'undefined' && !isNaN(MyObjData[i][0]) ) {
+      ChartData.addRow([MyObjData[i][0], MyObjData[i][1]]);
+    }
+  }
+  
+  ChartData.build();
+
+  if ( MyObjData[MyObjData.length-1][1] > MyObjData[MyObjData.length-2][1] ) {
+    var MyObjColor = ['#00DD00', '#78FF94'];
+  } else if ( MyObjData[MyObjData.length-1][1] < MyObjData[MyObjData.length-2][1] ) {
+    var MyObjColor = ['#FF0000', '#FF5192'];
+  } else {
+    var MyObjColor = ['#555555', '#bbbbbb'];
+  }
+
+  var ChartStyle = Charts.newAreaChart()
+      .setDataTable(ChartData)
+      .setStacked()
+      .setRange(0, 40)
+      .setTitle(ObjHakuba[0][1])
+      .setTitleTextStyle(Charts.newTextStyle().setColor('#333').setFontSize(16))
+      .setLegendPosition(Charts.Position.NONE)
+      .setColors(MyObjColor)
+      .build();
+
+  Logger.log(MyObjData.length);
+
+  var imageData = ChartStyle.getAs('image/png');
+
+  var data={
+    token:PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN'), 
+    channels:PropertiesService.getScriptProperties().getProperty('SLACK_CHANNEL'),
+    file:imageData,
+    title:'image'
+  };
+
+  var option={
+    'method':'POST',
+    'payload':data
+  };
+
+  var res =  UrlFetchApp.fetch('https://slack.com/api/files.upload',option);
+  Logger.log(res.getContentText());
+
+}
+
+function test21() {
+
+  var data = Charts.newDataTable()
+    .addColumn(Charts.ColumnType.STRING, "Month")
+    .addColumn(Charts.ColumnType.NUMBER, "In Store")
+    .addRow(["January", 10])
+    .addRow(["February", 82])
+    .addRow(["March", 20])
+    .addRow(["April", 25])
+    .addRow(["May", 30])
+    .build();
+
+  
+  var chart = Charts.newAreaChart()
+      .setDataTable(data)
+      .setStacked()
+      .setRange(0, 40)
+      .setTitle("Sales per Month")
+      .setTitleTextStyle(Charts.newTextStyle().setColor('#333').setFontSize(16))
+      .setColors(['#555', '#bbb'])
+      .setLegendPosition(Charts.Position.NONE)
+      .build();
+
+//  var imageData = Utilities.base64Encode(chart.getAs('image/png').getBytes());
+  var imageData = chart.getAs('image/png');
+
+  var data={
+    token:PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN'), 
+    channels:PropertiesService.getScriptProperties().getProperty('SLACK_CHANNEL'),
+    file:imageData,
+    title:'image'
+  };
+  var option={
+    'method':'POST',
+    'payload':data
+  };
+
+  var res =  UrlFetchApp.fetch('https://slack.com/api/files.upload',option);
+  Logger.log(res.getContentText());
 }
 
 function test11() {
 
-  const MySnow = new SnowfallAmount(ObjHakuba);
+  var PostMsg = '';
+  
+  const MySnowHakuba = new SnowfallAmount(ObjHakuba);
+  MySnowHakuba.get();
+  MySnowHakuba.putss();
+  var PostMsg = PostMsg + MySnowHakuba.getmsg();
 
-  MySnow.get();
-  MySnow.putss();
-  MySnow.postslack2();
+  const MySnowNagano = new SnowfallAmount(ObjNagano);
+  MySnowNagano.get();
+  MySnowNagano.putss();
+  var PostMsg = PostMsg + MySnowNagano.getmsg();
+
+  const MySnowFukushima = new SnowfallAmount(ObjFukushima);
+  MySnowFukushima.get();
+  MySnowFukushima.putss();
+  var PostMsg = PostMsg + MySnowFukushima.getmsg();
+  
+  const SlackPayload = {
+    'text' : 'こんぐらいやで' + '\n' + PostMsg,
+  };
+
+  postSlack(SlackPayload);
 
 }
 
-function test12() {
-
-  const MySnow = new SnowfallAmount(ObjNagano);
-
-  MySnow.get();
-  MySnow.putss();
-  MySnow.postslack2();
-
-}
   
 // Get HTML Content.
 function getHtml(TargetUrl){
@@ -233,16 +361,36 @@ SnowfallAmount.prototype = {
     }  
 
     const SlackPayload = {
-        'text'       : 'こんぐらいやで',
-        'attachments': [ {
-          'title': this.ObjRegion[0][2],
-          'text': PostMsg
-         } ]
+      'text' : 'こんぐらいやで' + '\n' +
+               '*' + this.ObjRegion[0][2] + '*' + '\n' +
+               PostMsg,
     };
 
     postSlack(SlackPayload);
 
+  },
+  
+  // Post message to Slack order by values descending.
+  getmsg : function() {
+
+    var ObjTmp = [];
+    var PostMsg = '';
+    var Cache = CacheService.getScriptCache();  
+  
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      ObjTmp[i] = { name: this.ObjRegion[i][1], value: Cache.get(this.ObjRegion[i][0]) };
+    }  
+
+    ObjTmp.sort(function(a, b) { if (a.value <= b.value) { return 1; } else { return -1; }});
+
+    for ( var i = 0; i < this.ObjRegion.length; i++ ) {
+      var PostMsg = PostMsg + ObjTmp[i].name + '  :  ' + ObjTmp[i].value + '\n';
+    }  
+
+    return '*' + this.ObjRegion[0][2] + '*' + '\n' + PostMsg + '\n' 
+
   }
+
 
 }
 
@@ -372,12 +520,54 @@ CtrlSS.prototype = {
       var SheetName = ObjSs.getSheetByName(this.UserName);
     }
 
-//    SheetName.getRange(this.Diff,1).setValue(this.yyyy + '/' + this.mm + '/' + this.dd);
-//    SheetName.getRange(this.Diff,2).setValue(this.Value);
-
     SheetName.getRange(this.Diff, 1, 1, this.Length).setValues(this.Value);
 
+  },
+
+  // get identifier of file on root directory.
+  output : function() {
+
+    // Set Spread Sheet Name like AmountOfSnowfall_2019-2020.
+    const SsName = SsFileName + '_' + this.Season;
+
+    // Get Spread Sheet ID from Script Properties.
+    var SsId = PropertiesService.getScriptProperties().getProperty(SsName);
+
+    // If not exist in Properties then get from DriveApp
+    if ( !SsId ) {
+      var MySs = new CtrlFile(SsName);
+      var SsId = MySs.getSSID();
+      var UserProp = PropertiesService.getScriptProperties();
+      UserProp.setProperty(SsName, SsId);
+    }
+
+    // If not exist SS then create.
+    if ( !SsId ) {
+      SpreadsheetApp.create(SsName);
+      var MySs = new CtrlFile(SsName);
+      var SsId = MySs.getSSID();
+      var UserProp = PropertiesService.getScriptProperties();
+      UserProp.setProperty(SsName, SsId);
+    }
+
+    // open spread sheet by id.
+    const ObjSs = SpreadsheetApp.openById(SsId);
+
+    // get sheet name.
+    var SheetName = ObjSs.getSheetByName(this.UserName);
+
+    // if not exist sheet then insert.
+    if ( !SheetName ) {
+      ObjSs.insertSheet(this.UserName);
+      var SheetName = ObjSs.getSheetByName(this.UserName);
+    }
+
+    const Data = SheetName.getRange(1, 1, this.Diff, this.Length).getValues();
+
+    return Data;
+
   }
+
 }
 
 
